@@ -9,6 +9,7 @@ import { pageSQLConsole } from "@/settings/sql/pageSQLConsole";
 import { pageStorageSettings } from "@/settings/storage/pageStorageSettings";
 import { pageExportCollections } from "@/settings/sync/pageExportCollections";
 import { pageImportCollections } from "@/settings/sync/pageImportCollections";
+import { pageWorkflows } from "@/workflows/pageWorkflows";
 
 window.app = window.app || {};
 window.app.routes = window.app.routes || {};
@@ -163,6 +164,7 @@ app.routes.blank("#/auth/oauth2-redirect-failure", async (route) => {
 });
 
 app.routes.superuserOnly("#/collections", pageCollections);
+app.routes.superuserOnly("#/workflows", pageWorkflows);
 app.routes.superuserOnly("#/logs", pageLogs);
 app.routes.superuserOnly("#/settings", pageApplicationSettings);
 app.routes.superuserOnly("#/settings/mail", pageMailSettings);
