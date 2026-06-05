@@ -1,0 +1,158 @@
+/* Workflows tab (OpenWorkflow plugin): stat cards, runs list, and the
+   run-detail / create side panels. Reuses framework primitives (.label, .btn,
+   .grid/.col-*, .field, .accordion, .modal) wherever possible. */
+
+/* OpenWorkflow renders the "pending" tone as yellow, which PocketBase has no
+   built-in .label modifier for (its warning tone is orange and reads red-ish in
+   dark mode). Define a workflows-local .label.pending tone -- background-only,
+   matching how the core tones (.info/.success/.warning) work -- rather than
+   overriding the core .label.warning token. */
+.page-workflows,
+.workflow-run-detail-panel,
+.workflow-run-create-panel {
+    --owPendingColor: #caa006;
+}
+.page-workflows .label.pending,
+.workflow-run-detail-panel .label.pending {
+    background: color-mix(in srgb, var(--owPendingColor), transparent 80%);
+}
+
+/* ---------------------------------------------------------------- */
+/* Stat cards                                                       */
+/* ---------------------------------------------------------------- */
+.page-workflows .ow-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--smSpacing);
+    margin-bottom: var(--smSpacing);
+}
+@media (min-width: 768px) {
+    .page-workflows .ow-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1100px) {
+    .page-workflows .ow-cards {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+.page-workflows .ow-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--smSpacing);
+    border: 1px solid var(--surfaceAlt3Color);
+    border-radius: var(--borderRadius);
+    background: var(--surfaceColor);
+}
+.page-workflows .ow-card-value {
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 600;
+}
+.page-workflows .ow-card-label {
+    font-size: var(--smFontSize);
+    color: var(--surfaceTxtHintColor);
+}
+.page-workflows .ow-card-pending .ow-card-value {
+    color: var(--owPendingColor);
+}
+.page-workflows .ow-card-running .ow-card-value {
+    color: var(--infoColor);
+}
+.page-workflows .ow-card-completed .ow-card-value {
+    color: var(--successColor);
+}
+.page-workflows .ow-card-failed .ow-card-value {
+    color: var(--dangerColor);
+}
+.page-workflows .ow-card-canceled .ow-card-value {
+    color: var(--surfaceTxtHintColor);
+}
+
+/* ---------------------------------------------------------------- */
+/* Runs list                                                        */
+/* ---------------------------------------------------------------- */
+.ow-run-row {
+    cursor: pointer;
+}
+.ow-run-row:hover {
+    background: var(--surfaceAlt1Color);
+}
+/* the shared formatted-date component is center-aligned by default */
+.page-workflows .formatted-date.short {
+    text-align: left;
+}
+.ow-loadmore {
+    margin-top: var(--smSpacing);
+}
+
+/* ---------------------------------------------------------------- */
+/* Run-detail side panel                                            */
+/* ---------------------------------------------------------------- */
+.workflow-run-detail-panel .ow-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+/* The flex/gap lives on an inner body wrapper (not on .modal-content) so the
+   modal's sticky scroll-shadow ::before/::after pseudo-elements don't get
+   counted as flex items and inflate the spacing after the header. */
+.workflow-run-detail-panel .ow-detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--smSpacing);
+}
+.workflow-run-detail-panel .ow-detail-loading {
+    padding: var(--smSpacing) 0;
+}
+
+.ow-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 20px;
+}
+.ow-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.ow-meta-label {
+    font-size: var(--smFontSize);
+    color: var(--surfaceTxtHintColor);
+}
+.ow-meta-value {
+    word-break: break-word;
+}
+.ow-run-link {
+    align-self: flex-start;
+    padding: 0;
+    min-height: 0;
+    height: auto;
+    text-decoration: underline;
+}
+
+.ow-steps-title {
+    margin: 0;
+}
+
+/* steps (accordions) */
+.ow-step-accordion .ow-step-sub {
+    white-space: nowrap;
+}
+.ow-step-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px 20px;
+    font-size: var(--smFontSize);
+    color: var(--surfaceTxtHintColor);
+}
+
+/* ---------------------------------------------------------------- */
+/* Create-run side panel                                            */
+/* ---------------------------------------------------------------- */
+.workflow-run-create-panel .json-state {
+    margin-left: 5px;
+}
