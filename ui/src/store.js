@@ -63,6 +63,11 @@ window.app.store = store({
             label: "Collections",
         },
         {
+            href: "#/workflows",
+            icon: "ri-flow-chart",
+            label: "Workflows",
+        },
+        {
             href: "#/logs",
             icon: "ri-bar-chart-box-line",
             label: "Logs",
