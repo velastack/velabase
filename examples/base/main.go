@@ -12,6 +12,7 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/ghupdate"
 	"github.com/pocketbase/pocketbase/plugins/jsvm"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/plugins/openworkflow"
 	"github.com/pocketbase/pocketbase/tools/hook"
 	"github.com/pocketbase/pocketbase/tools/osutils"
 )
@@ -102,6 +103,10 @@ func main() {
 
 	// GitHub selfupdate
 	ghupdate.MustRegister(app, app.RootCmd, ghupdate.Config{})
+
+	// OpenWorkflow-compatible durable workflow engine (dedicated openworkflow.db
+	// + /api/ow/v1 Backend HTTP API for external OpenWorkflow workers)
+	openworkflow.MustRegister(app, openworkflow.Config{})
 
 	// static route to serves files from the provided public dir
 	// (if publicDir exists and the route path is not already defined)
