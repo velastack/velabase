@@ -102,7 +102,12 @@ func main() {
 	})
 
 	// GitHub selfupdate
-	ghupdate.MustRegister(app, app.RootCmd, ghupdate.Config{})
+	// Point at the velabase fork so `pocketbase update` pulls our
+	// OpenWorkflow-enabled builds instead of upstream pocketbase/pocketbase.
+	ghupdate.MustRegister(app, app.RootCmd, ghupdate.Config{
+		Owner: "velastack",
+		Repo:  "velabase",
+	})
 
 	// OpenWorkflow-compatible durable workflow engine (dedicated openworkflow.db
 	// + /api/ow/v1 Backend HTTP API for external OpenWorkflow workers)
