@@ -100,3 +100,38 @@ export function stepAttemptIndexById(steps) {
     }
     return map;
 }
+
+// Calls `fn` every `interval` ms while the browser tab is visible (and once
+// right away when it becomes visible again), like the OpenWorkflow dashboard's
+// usePolling. Returns a stop function.
+export function startPolling(fn, interval) {
+    let timer = null;
+
+    function start() {
+        timer = timer || setInterval(fn, interval);
+    }
+
+    function stop() {
+        clearInterval(timer);
+        timer = null;
+    }
+
+    function onVisibilityChange() {
+        if (document.hidden) {
+            stop();
+        } else {
+            fn();
+            start();
+        }
+    }
+
+    if (!document.hidden) {
+        start();
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+        stop();
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+}

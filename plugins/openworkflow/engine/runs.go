@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pocketbase/dbx"
@@ -50,6 +51,10 @@ type ListRunsParams struct {
 	ListParams
 	Status       string
 	WorkflowName string
+	// WorkflowNameContains is a case-insensitive substring match. It is an
+	// extension over the reference Backend (whose workflowName filter is exact)
+	// for the admin UI's search box.
+	WorkflowNameContains string
 }
 
 // CreateWorkflowRun inserts a new run, deduplicating on the idempotency key
@@ -588,6 +593,9 @@ func (e *Engine) CountWorkflowRuns(ns string) (WorkflowRunCounts, error) {
 	return counts, nil
 }
 
+// likeEscaper neutralizes the LIKE wildcards so user input matches literally.
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
 // ListWorkflowRuns returns a cursor-paginated page of runs (newest first).
 func (e *Engine) ListWorkflowRuns(ns string, p ListRunsParams) ([]*WorkflowRun, paginationMeta, error) {
 	limit := clampLimit(p.Limit)
@@ -614,6 +622,10 @@ func (e *Engine) ListWorkflowRuns(ns string, p ListRunsParams) ([]*WorkflowRun, 
 	if p.WorkflowName != "" {
 		where += ` AND "workflow_name" = {:wfName}`
 		params["wfName"] = p.WorkflowName
+	}
+	if p.WorkflowNameContains != "" {
+		where += ` AND "workflow_name" LIKE {:wfNameLike} ESCAPE '\'`
+		params["wfNameLike"] = "%" + likeEscaper.Replace(p.WorkflowNameContains) + "%"
 	}
 	if cur != nil {
 		where += ` AND ("created_at", "id") ` + op + ` ({:cca}, {:cid})`

@@ -20,8 +20,10 @@ func (p *plugin) registerRoutes(se *core.ServeEvent) {
 
 	// Workflow runs
 	g.POST("/runs", p.handleCreateRun)
-	g.GET("/runs", p.handleListRuns)
-	g.GET("/runs/counts", p.handleCountRuns)
+	// The admin Workflows tab polls the list and the counts while it is open,
+	// so (like /claim below) their success request logs are skipped.
+	g.GET("/runs", p.handleListRuns).Bind(apis.SkipSuccessActivityLog())
+	g.GET("/runs/counts", p.handleCountRuns).Bind(apis.SkipSuccessActivityLog())
 	g.GET("/runs/{id}", p.handleGetRun)
 	// Workers poll /claim continuously and almost every poll is empty, so the
 	// success request log is skipped (failed claims are still logged) and
@@ -100,12 +102,16 @@ func listParams(e *core.RequestEvent) engine.ListParams {
 
 // listRunsParams extends listParams with the run-only status/workflowName
 // filters (absent params leave the corresponding filter unset).
+// workflowNameContains is an admin UI extension, not part of the reference
+// Backend contract.
 func listRunsParams(e *core.RequestEvent) engine.ListRunsParams {
 	q := e.Request.URL.Query()
 	return engine.ListRunsParams{
 		ListParams:   listParams(e),
 		Status:       q.Get("status"),
 		WorkflowName: q.Get("workflowName"),
+
+		WorkflowNameContains: q.Get("workflowNameContains"),
 	}
 }
 

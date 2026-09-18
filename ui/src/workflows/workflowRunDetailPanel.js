@@ -4,7 +4,17 @@
 // and the steps as a list of accordions (step name left, status badge right;
 // expand for per-step payloads + child-run link). Read-only except for Cancel.
 
-import { computeDuration, fmtDate, isTerminal, statusClass, statusLabel, stepAttemptIndexById } from "./workflowUtils";
+import {
+    computeDuration,
+    fmtDate,
+    isTerminal,
+    startPolling,
+    statusClass,
+    statusLabel,
+    stepAttemptIndexById,
+} from "./workflowUtils";
+
+const POLL_INTERVAL = 5000;
 
 window.app = window.app || {};
 window.app.modals = window.app.modals || {};
@@ -45,8 +55,12 @@ function workflowRunDetailModal(opts) {
         parentRunId: null,
     });
 
-    async function load() {
-        data.loading = true;
+    // `silent` is used by the background polling: no loading state (which
+    // would collapse the open step accordions) and no error toasts.
+    async function load(silent = false) {
+        if (!silent) {
+            data.loading = true;
+        }
         try {
             const [runRes, stepsRes] = await Promise.all([
                 app.pb.send(`${base}/runs/${runId}`, { method: "GET", requestKey: "ow_run_detail" }),
@@ -56,8 +70,14 @@ function workflowRunDetailModal(opts) {
                     requestKey: "ow_run_detail_steps",
                 }),
             ]);
-            data.run = runRes.run;
-            data.steps = stepsRes.data || [];
+            const steps = stepsRes.data || [];
+            // skip the rerender when a poll brought nothing new
+            if (!silent || JSON.stringify(runRes.run) !== JSON.stringify(data.run)) {
+                data.run = runRes.run;
+            }
+            if (!silent || JSON.stringify(steps) !== JSON.stringify(data.steps)) {
+                data.steps = steps;
+            }
 
             // best-effort parent run resolution via the parent step attempt
             if (data.run?.parentStepAttemptId) {
@@ -72,9 +92,19 @@ function workflowRunDetailModal(opts) {
                 }
             }
         } catch (err) {
-            if (!err.isAbort) app.checkApiError(err);
+            if (!err.isAbort && !silent) app.checkApiError(err);
         }
-        data.loading = false;
+        if (!silent) {
+            data.loading = false;
+        }
+    }
+
+    // live-refresh only while the run can still change
+    let stopPolling = null;
+    function poll() {
+        if (data.run && !isTerminal(data.run.status)) {
+            load(true);
+        }
     }
 
     function cancel() {
@@ -225,11 +255,13 @@ function workflowRunDetailModal(opts) {
             className: "modal workflow-run-detail-panel",
             onbeforeopen: (el) => {
                 load();
+                stopPolling = startPolling(poll, POLL_INTERVAL);
                 return opts.onbeforeopen?.(el);
             },
             onafteropen: (el) => opts.onafteropen?.(el),
             onbeforeclose: (el) => opts.onbeforeclose?.(el),
             onafterclose: (el) => {
+                stopPolling?.();
                 opts.onafterclose?.(el);
                 el?.remove();
             },

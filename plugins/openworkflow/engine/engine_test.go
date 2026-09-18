@@ -527,6 +527,32 @@ func TestListWorkflowRunsWorkflowNameFilter(t *testing.T) {
 	}
 }
 
+func TestListWorkflowRunsWorkflowNameContainsFilter(t *testing.T) {
+	e := openTestEngine(t)
+	for _, name := range []string{"sync-stripe-prices", "sync-stripe-products", "send_email", "sendXemail"} {
+		mkRun(t, e, CreateWorkflowRunParams{WorkflowName: name})
+		time.Sleep(time.Millisecond)
+	}
+
+	cases := map[string]int{
+		"stripe":             2,
+		"STRIPE-PR":          2, // case-insensitive
+		"sync-stripe-prices": 1,
+		"d_e":                1, // "_" is literal, not a wildcard
+		"%":                  0, // "%" is literal, not a wildcard
+		"nope":               0,
+	}
+	for contains, want := range cases {
+		got, _, err := e.ListWorkflowRuns(testNS, ListRunsParams{WorkflowNameContains: contains})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != want {
+			t.Fatalf("workflowNameContains=%q len = %d, want %d", contains, len(got), want)
+		}
+	}
+}
+
 func TestListWorkflowRunsCombinedFilterAndPagination(t *testing.T) {
 	e := openTestEngine(t)
 	// Decoys first, while nothing else is pending (mkTerminalRun claims the
