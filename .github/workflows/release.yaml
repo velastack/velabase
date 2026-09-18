@@ -7,6 +7,10 @@ on:
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    # Explicitly grant write so goreleaser can create the release even when the
+    # org enforces a read-only default GITHUB_TOKEN (repo toggle grayed out).
+    permissions:
+      contents: write
     env:
       flags: ""
     steps:
