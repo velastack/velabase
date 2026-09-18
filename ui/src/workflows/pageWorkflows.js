@@ -3,12 +3,21 @@
 // The run-detail view is a side panel driven by the `run` query param
 // (collections-style), so back/forward and deep-links work.
 
-import { isTerminal, statusClass, statusLabel, toDisplayDatetime } from "./workflowUtils";
+import {
+    computeDuration,
+    isTerminal,
+    startPolling,
+    statusClass,
+    statusLabel,
+    toDisplayDatetime,
+} from "./workflowUtils";
 import "./workflowRunCreatePanel";
 import "./workflowRunDetailPanel";
 
 const NAMESPACE = "default";
-const PER_PAGE = 50;
+// Page sizes and cursor Prev/Next paging mirror @openworkflow/dashboard.
+const PAGE_SIZES = [25, 50, 100];
+const POLL_INTERVAL = 5000;
 const RUN_QUERY_KEY = "run";
 const CARD_ORDER = ["pending", "running", "completed", "failed", "canceled"];
 
@@ -17,19 +26,32 @@ export function pageWorkflows(route) {
 
     const data = store({
         runs: [],
+        // cursors of the adjacent pages, as returned with the current page
+        prev: null,
         next: null,
+        // the current page position -- at most one of after/before is set
+        // (both empty means the first page); persisted in the url together
+        // with the page size and the filters so a page is deep-linkable
+        after: route.query.after?.[0] || "",
+        before: route.query.after?.[0] ? "" : route.query.before?.[0] || "",
+        pageSize: resolvePageSize(route.query.limit?.[0]),
         loading: false,
         counts: null,
-        statusFilter: "",
-        nameFilter: "",
+        statusFilter: CARD_ORDER.includes(route.query.status?.[0]) ? route.query.status[0] : "",
+        nameFilter: route.query.name?.[0] || "",
         activeRunId: route.query[RUN_QUERY_KEY]?.[0] || "",
-        get canLoadMore() {
-            return !!data.next;
-        },
         get hasFilters() {
             return !!data.statusFilter || !!data.nameFilter.trim();
         },
     });
+
+    // Per-instance request keys: on a same-route navigation (e.g. a deep-link
+    // with different query params) the new page is mounted before the old one
+    // is unmounted, so a shared key would let the old page's cleanup abort the
+    // new page's initial requests.
+    const uid = app.utils.randomString(6);
+    const runsKey = "ow_runs_" + uid;
+    const countsKey = "ow_counts_" + uid;
 
     // The name filter reloads on a short debounce so typing doesn't fire a
     // request per keystroke.
@@ -49,17 +71,21 @@ export function pageWorkflows(route) {
 
     async function loadCounts() {
         try {
-            const res = await app.pb.send(`${apiBase()}/runs/counts`, { method: "GET", requestKey: "ow_counts" });
+            const res = await app.pb.send(`${apiBase()}/runs/counts`, { method: "GET", requestKey: countsKey });
             data.counts = res.counts;
         } catch (err) {
             if (!err.isAbort) app.checkApiError(err);
         }
     }
 
-    async function loadRuns(reset = true) {
-        data.loading = true;
+    // (Re)loads the current page. `silent` is used by the background polling:
+    // no loading state and no error toasts.
+    async function loadRuns(silent = false) {
+        if (!silent) {
+            data.loading = true;
+        }
         try {
-            const query = { limit: PER_PAGE };
+            const query = { limit: data.pageSize };
             // Filters are not encoded in the cursor, so they must be resent on
             // every page request.
             if (data.statusFilter) {
@@ -67,43 +93,69 @@ export function pageWorkflows(route) {
             }
             const name = data.nameFilter.trim();
             if (name) {
-                query.workflowName = name;
+                query.workflowNameContains = name;
             }
-            if (!reset && data.next) {
-                query.after = data.next;
+            if (data.after) {
+                query.after = data.after;
+            } else if (data.before) {
+                query.before = data.before;
             }
-            const res = await app.pb.send(`${apiBase()}/runs`, { method: "GET", query, requestKey: "ow_runs" });
-            data.runs = reset ? res.data || [] : data.runs.concat(res.data || []);
+            const res = await app.pb.send(`${apiBase()}/runs`, { method: "GET", query, requestKey: runsKey });
+            const runs = res.data || [];
+            // skip the table rerender when a poll brought nothing new
+            if (!silent || JSON.stringify(runs) !== JSON.stringify(data.runs)) {
+                data.runs = runs;
+            }
+            data.prev = res.pagination?.prev || null;
             data.next = res.pagination?.next || null;
         } catch (err) {
-            if (!err.isAbort) app.checkApiError(err);
+            if (!err.isAbort && !silent) app.checkApiError(err);
         }
-        data.loading = false;
+        if (!silent) {
+            data.loading = false;
+        }
     }
 
-    // Filter changes always restart from the first page -- an existing cursor
-    // was issued against the previous filter set.
+    function syncQueryParams() {
+        app.utils.replaceHashQueryParams({
+            limit: data.pageSize === PAGE_SIZES[0] ? null : data.pageSize,
+            after: data.after,
+            before: data.before,
+            status: data.statusFilter,
+            name: data.nameFilter.trim(),
+        });
+    }
+
+    function goToPage(after, before) {
+        data.after = after || "";
+        data.before = before || "";
+        syncQueryParams();
+        loadRuns();
+    }
+
+    // Filter and page size changes always restart from the first page -- an
+    // existing cursor was issued against the previous filter set.
     function toggleStatusFilter(status) {
         data.statusFilter = data.statusFilter === status ? "" : status;
-        data.next = null;
-        loadRuns(true);
+        goToPage();
     }
 
     function setNameFilter(value) {
         data.nameFilter = value;
         clearTimeout(nameDebounce);
-        nameDebounce = setTimeout(() => {
-            data.next = null;
-            loadRuns(true);
-        }, 300);
+        nameDebounce = setTimeout(() => goToPage(), 300);
     }
 
     function clearFilters() {
         clearTimeout(nameDebounce);
         data.statusFilter = "";
         data.nameFilter = "";
-        data.next = null;
-        loadRuns(true);
+        goToPage();
+    }
+
+    function setPageSize(size) {
+        data.pageSize = resolvePageSize(size);
+        goToPage();
     }
 
     function cancelRun(run) {
@@ -122,7 +174,8 @@ export function pageWorkflows(route) {
         app.modals.openWorkflowRunCreate({
             namespace: NAMESPACE,
             onsave: () => {
-                loadRuns(true);
+                // jump to the first page where the new run is listed
+                goToPage();
                 loadCounts();
             },
         });
@@ -172,8 +225,13 @@ export function pageWorkflows(route) {
     ];
 
     // initial load
-    loadRuns(true);
+    loadRuns();
     loadCounts();
+
+    const stopPolling = startPolling(() => {
+        loadRuns(true);
+        loadCounts();
+    }, POLL_INTERVAL);
 
     return t.div(
         {
@@ -181,8 +239,9 @@ export function pageWorkflows(route) {
             className: "page page-workflows",
             onunmount: () => {
                 clearTimeout(nameDebounce);
-                app.pb.cancelRequest("ow_counts");
-                app.pb.cancelRequest("ow_runs");
+                stopPolling();
+                app.pb.cancelRequest(countsKey);
+                app.pb.cancelRequest(runsKey);
                 watchers.forEach((w) => w?.unwatch());
             },
         },
@@ -219,7 +278,7 @@ export function pageWorkflows(route) {
                         type: "button",
                         className: "btn secondary",
                         onclick: () => {
-                            loadRuns(true);
+                            loadRuns();
                             loadCounts();
                         },
                     },
@@ -271,6 +330,7 @@ export function pageWorkflows(route) {
                         t.th({}, "Status"),
                         t.th({}, "Attempts"),
                         t.th({}, "Created"),
+                        t.th({}, "Duration"),
                         t.th({}, ""),
                     ),
                 ),
@@ -279,7 +339,11 @@ export function pageWorkflows(route) {
                         ? data.runs.map((run) =>
                             t.tr(
                                 { className: "ow-run-row", onclick: () => (data.activeRunId = run.id) },
-                                t.td({}, t.span({ className: "txt-mono" }, run.workflowName)),
+                                t.td(
+                                    {},
+                                    t.span({ className: "txt-mono" }, run.workflowName),
+                                    run.version ? t.span({ className: "label m-l-10" }, run.version) : null,
+                                ),
                                 t.td(
                                     {},
                                     t.span({ className: "label " + statusClass(run.status) }, statusLabel(run.status)),
@@ -291,6 +355,10 @@ export function pageWorkflows(route) {
                                         value: () => toDisplayDatetime(run.createdAt),
                                         short: true,
                                     }),
+                                ),
+                                t.td(
+                                    {},
+                                    t.span({ className: "txt-mono" }, computeDuration(run.startedAt, run.finishedAt)),
                                 ),
                                 t.td(
                                     {},
@@ -313,7 +381,7 @@ export function pageWorkflows(route) {
                         : t.tr(
                             {},
                             t.td(
-                                { colSpan: 5 },
+                                { colSpan: 6 },
                                 t.span(
                                     { className: "txt-hint" },
                                     data.loading
@@ -325,21 +393,60 @@ export function pageWorkflows(route) {
                             ),
                         )),
             ),
+            // also kept for a non-default page size, otherwise a size that fits
+            // all runs in one page would hide the control to change it back
             () =>
-                data.canLoadMore
+                data.prev || data.next || data.pageSize !== PAGE_SIZES[0]
                     ? t.div(
-                        { className: "ow-loadmore" },
+                        { className: "ow-pagination" },
+                        t.span(
+                            { className: "txt-hint" },
+                            () => `Showing ${data.runs.length} run${data.runs.length === 1 ? "" : "s"}`,
+                        ),
+                        t.div({ className: "flex-fill" }),
+                        t.span({ className: "txt-hint" }, "Page size"),
+                        t.div(
+                            { className: "field ow-page-size" },
+                            app.components.select({
+                                options: PAGE_SIZES.map((size) => ({ value: size, label: "" + size })),
+                                required: true,
+                                value: () => data.pageSize,
+                                onchange: (selected) => {
+                                    const size = selected?.[0]?.value;
+                                    if (size && size !== data.pageSize) {
+                                        setPageSize(size);
+                                    }
+                                },
+                            }),
+                        ),
                         t.button(
                             {
                                 type: "button",
-                                className: "btn secondary expanded",
-                                onclick: () => loadRuns(false),
+                                className: "btn sm secondary",
+                                disabled: () => !data.prev || data.loading,
+                                onclick: () => goToPage(null, data.prev),
                             },
-                            t.span({ className: "txt" }, "Load more"),
+                            t.i({ className: "ri-arrow-left-s-line" }),
+                            t.span({ className: "txt" }, "Previous"),
+                        ),
+                        t.button(
+                            {
+                                type: "button",
+                                className: "btn sm secondary",
+                                disabled: () => !data.next || data.loading,
+                                onclick: () => goToPage(data.next, null),
+                            },
+                            t.span({ className: "txt" }, "Next"),
+                            t.i({ className: "ri-arrow-right-s-line" }),
                         ),
                     )
                     : t.div({}),
             t.footer({ className: "page-footer" }, app.components.credits()),
         ),
     );
+}
+
+function resolvePageSize(limit) {
+    limit = parseInt(limit, 10);
+    return PAGE_SIZES.includes(limit) ? limit : PAGE_SIZES[0];
 }
