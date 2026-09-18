@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -22,7 +23,10 @@ func (p *plugin) registerRoutes(se *core.ServeEvent) {
 	g.GET("/runs", p.handleListRuns)
 	g.GET("/runs/counts", p.handleCountRuns)
 	g.GET("/runs/{id}", p.handleGetRun)
-	g.POST("/claim", p.handleClaim)
+	// Workers poll /claim continuously and almost every poll is empty, so the
+	// success request log is skipped (failed claims are still logged) and
+	// handleClaim logs only the polls that actually claimed a run.
+	g.POST("/claim", p.handleClaim).Bind(apis.SkipSuccessActivityLog())
 	g.POST("/runs/{id}/lease", p.handleExtendLease)
 	g.POST("/runs/{id}/sleep", p.handleSleep)
 	g.POST("/runs/{id}/complete", p.handleCompleteRun)
@@ -206,9 +210,19 @@ func (p *plugin) handleClaim(e *core.RequestEvent) error {
 	if err := bind(e, &b); err != nil {
 		return err
 	}
+	started := time.Now()
 	run, err := p.engine.ClaimWorkflowRun(ns, b.WorkerID, b.LeaseDurationMs)
 	if err != nil {
 		return toAPIError(err)
+	}
+	if run != nil {
+		e.App.Logger().Info("workflow run claimed",
+			"namespace", ns,
+			"runId", run.ID,
+			"workflowName", run.WorkflowName,
+			"workerId", b.WorkerID,
+			"execTime", float64(time.Since(started))/float64(time.Millisecond),
+		)
 	}
 	return e.JSON(http.StatusOK, map[string]any{"run": run})
 }
