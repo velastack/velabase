@@ -38,8 +38,9 @@ jobs:
         if: ${{ !inputs.tag && !startsWith(github.ref, 'refs/tags/v') }}
         run: echo "flags=--snapshot" >> "$GITHUB_ENV"
 
-      - name: Plugin versions for the release notes
+      - name: PocketBase + plugin versions for the release notes
         run: |
+          echo "PB_VERSION=$(go list -m -f '{{.Version}}' github.com/pocketbase/pocketbase)" >> "$GITHUB_ENV"
           echo "OW_VERSION=$(go list -m -f '{{.Version}}' github.com/velastack/pocketbase-openworkflow)" >> "$GITHUB_ENV"
           echo "WA_VERSION=$(go list -m -f '{{.Version}}' github.com/velastack/pocketbase-whatsapp)" >> "$GITHUB_ENV"
 

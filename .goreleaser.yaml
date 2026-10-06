@@ -51,7 +51,7 @@ release:
   draft: false
   prerelease: auto
   header: |
-    PocketBase [{{ .Tag }}](https://github.com/pocketbase/pocketbase/releases/tag/{{ .Tag }}) with:
+    PocketBase [{{ .Env.PB_VERSION }}](https://github.com/pocketbase/pocketbase/releases/tag/{{ .Env.PB_VERSION }}) with:
 
     - [pocketbase-openworkflow](https://github.com/velastack/pocketbase-openworkflow) {{ .Env.OW_VERSION }}
     - [pocketbase-whatsapp](https://github.com/velastack/pocketbase-whatsapp) {{ .Env.WA_VERSION }}
