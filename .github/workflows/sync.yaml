@@ -1,0 +1,55 @@
+name: sync upstream
+
+# Follows upstream PocketBase releases: bumps PocketBase (+ the plugins),
+# merges upstream examples/base/main.go changes, verifies, then commits,
+# tags vX.Y.Z and releases. See scripts/sync-upstream.sh.
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Upstream version to sync to (default: latest release)"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.sync.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - id: sync
+        env:
+          UPSTREAM_VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bash scripts/sync-upstream.sh
+
+      - if: steps.sync.outputs.tag != ''
+        run: git push origin HEAD:master "refs/tags/${{ steps.sync.outputs.tag }}"
+
+  release:
+    needs: sync
+    if: needs.sync.outputs.tag != ''
+    uses: ./.github/workflows/release.yaml
+    with:
+      tag: ${{ needs.sync.outputs.tag }}
+    permissions:
+      contents: write

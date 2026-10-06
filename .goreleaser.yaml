@@ -1,0 +1,76 @@
+version: 2
+
+# project_name drives the archive names: keep "pocketbase" so the release
+# assets stay pocketbase_<version>_<os>_<arch>.zip (ghupdate and the
+# openworkflow-pocketbase conformance CI download them by that name)
+project_name: pocketbase
+
+dist: .builds
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: build_noncgo
+    main: .
+    binary: pocketbase
+    ldflags:
+      - -s -w -X github.com/pocketbase/pocketbase.Version={{ .Version }}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - arm
+      - s390x
+      - ppc64le
+    goarm:
+      - 7
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: s390x
+      - goos: windows
+        goarch: ppc64le
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: s390x
+      - goos: darwin
+        goarch: ppc64le
+
+release:
+  # published directly (not drafted) so automated syncs are immediately
+  # visible to ghupdate and the /releases/latest download URLs
+  draft: false
+  prerelease: auto
+  header: |
+    PocketBase [{{ .Tag }}](https://github.com/pocketbase/pocketbase/releases/tag/{{ .Tag }}) with:
+
+    - [pocketbase-openworkflow](https://github.com/velastack/pocketbase-openworkflow) {{ .Env.OW_VERSION }}
+    - [pocketbase-whatsapp](https://github.com/velastack/pocketbase-whatsapp) {{ .Env.WA_VERSION }}
+  footer: |
+    > _To update the prebuilt executable you can run `./pocketbase update`._
+
+archives:
+  - id: archive_noncgo
+    ids: [build_noncgo]
+    formats: [zip]
+    files:
+      - LICENSE.md
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# the release header links the upstream release notes instead
+changelog:
+  disable: true

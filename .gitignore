@@ -1,0 +1,7 @@
+/pocketbase
+/velabase
+/.builds
+pb_data/
+pb_public/
+pb_hooks/
+pb_migrations/
