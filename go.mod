@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/pocketbase/pocketbase v0.40.4
 	github.com/velastack/pocketbase-openworkflow v0.1.0
-	github.com/velastack/pocketbase-whatsapp v0.1.0
+	github.com/velastack/pocketbase-whatsapp v0.1.1
 )
 
 require (
