@@ -85,8 +85,8 @@ github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PK
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/velastack/pocketbase-openworkflow v0.1.0 h1:+pHD8DHW9MYxYxLUN3wUkEfU2Rd+2rhnqi7V8C5U624=
 github.com/velastack/pocketbase-openworkflow v0.1.0/go.mod h1:QBL6QOXpknEx3nlLG6xUjbZvHJPOaqcMoEw+LLJzGmk=
-github.com/velastack/pocketbase-whatsapp v0.1.0 h1:ed9jUjqFQXjxdGNNnY20x8l2GBlzofQsgT684bd+k9E=
-github.com/velastack/pocketbase-whatsapp v0.1.0/go.mod h1:VP7PrRj9lpBAQ5HiMtpWwz/EkYSOjmWjYzx6Ae+kehY=
+github.com/velastack/pocketbase-whatsapp v0.1.1 h1:N2KNkDbfsdJimivEqmAITidzvJ1l7JvBJJSkXnd0EGs=
+github.com/velastack/pocketbase-whatsapp v0.1.1/go.mod h1:VP7PrRj9lpBAQ5HiMtpWwz/EkYSOjmWjYzx6Ae+kehY=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.57.0 h1:3ZVCjf8Ggz7zneR/EHRVx68Ctf+2pmIMP2UFhh9cC6M=
