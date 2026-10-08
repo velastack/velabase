@@ -117,6 +117,9 @@ func main() {
 	// WhatsApp one-time code auth (configured in Settings > WhatsApp)
 	whatsapp.MustRegister(app, whatsapp.Config{})
 
+	// core settings pinned by env variables (APP_NAME, ORIGIN, PB_SMTP_*, PB_S3_*, ...)
+	bindEnvSettings(app)
+
 	// static route to serves files from the provided public dir
 	// (if publicDir exists and the route path is not already defined)
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
