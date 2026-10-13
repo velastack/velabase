@@ -83,8 +83,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
-github.com/velastack/pocketbase-openworkflow v0.1.0 h1:+pHD8DHW9MYxYxLUN3wUkEfU2Rd+2rhnqi7V8C5U624=
-github.com/velastack/pocketbase-openworkflow v0.1.0/go.mod h1:QBL6QOXpknEx3nlLG6xUjbZvHJPOaqcMoEw+LLJzGmk=
+github.com/velastack/pocketbase-openworkflow v0.2.0 h1:TT30i0BKMHqtdBS8VARFy4/Rd+Q04bC5UuwTYAKNB1Q=
+github.com/velastack/pocketbase-openworkflow v0.2.0/go.mod h1:QBL6QOXpknEx3nlLG6xUjbZvHJPOaqcMoEw+LLJzGmk=
 github.com/velastack/pocketbase-whatsapp v0.1.2 h1:JiEwLHacsgDgiN00ffgjGy1mMx9UxkfkFMF92+aPa/c=
 github.com/velastack/pocketbase-whatsapp v0.1.2/go.mod h1:VP7PrRj9lpBAQ5HiMtpWwz/EkYSOjmWjYzx6Ae+kehY=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
