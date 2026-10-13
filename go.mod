@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/pocketbase/ozzo-validation/v4 v4.3.0
 	github.com/pocketbase/pocketbase v0.40.5
-	github.com/velastack/pocketbase-openworkflow v0.1.0
+	github.com/velastack/pocketbase-openworkflow v0.2.0
 	github.com/velastack/pocketbase-whatsapp v0.1.2
 )
 
