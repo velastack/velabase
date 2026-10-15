@@ -52,6 +52,13 @@ curl -sf "$base/api/health" > /dev/null || { cat "$tmp/serve.log" >&2; die "serv
 ext="$(curl -sf "$base/_/extensions.js")"
 grep -q '#/workflows' <<< "$ext" || die "openworkflow UI extension missing from /_/extensions.js"
 grep -q 'settings/whatsapp' <<< "$ext" || die "whatsapp UI extension missing from /_/extensions.js"
+grep -q '#/whatsapp"' <<< "$ext" || die "whatsapp Inbox page missing from /_/extensions.js"
+
+code="$(curl -s -o /dev/null -w '%{http_code}' "$base/api/whatsapp/inbox")"
+[ "$code" = "401" ] || die "expected 401 from the unauthenticated WhatsApp inbox API, got $code"
+
+code="$(curl -s -o /dev/null -w '%{http_code}' -X POST -d '{}' "$base/api/whatsapp/webhook")"
+[ "$code" = "401" ] || die "expected 401 from an unsigned WhatsApp webhook, got $code"
 
 code="$(curl -s -o /dev/null -w '%{http_code}' "$base/api/ow/v1/default/runs")"
 [ "$code" = "401" ] || die "expected 401 from the unauthenticated OpenWorkflow API, got $code"
