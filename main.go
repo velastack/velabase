@@ -105,6 +105,8 @@ func main() {
 	// GitHub selfupdate
 	// Point at velastack/velabase so `pocketbase update` pulls velabase
 	// builds instead of upstream pocketbase/pocketbase.
+	// Upstream switched to plugins/update (BugStage host at ganigeorgiev.com)
+	// in v0.40.6; velabase keeps ghupdate because its releases are on GitHub.
 	ghupdate.MustRegister(app, app.RootCmd, ghupdate.Config{
 		Owner: "velastack",
 		Repo:  "velabase",
