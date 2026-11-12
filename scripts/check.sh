@@ -30,11 +30,25 @@ trap cleanup EXIT
 
 echo "==> go vet + build"
 go vet ./...
-go build -o "$tmp/pocketbase" .
+
+# build with the same -X flag as the release (.goreleaser.yaml): the linker
+# silently ignores -X for a symbol that doesn't exist, so a stale module path
+# there would ship binaries without a version and break `pocketbase update`
+version_sym="$(grep -o -- '-X [^ ]*\.Version=' .goreleaser.yaml | sed -e 's/^-X //' -e 's/=$//')"
+[ -n "$version_sym" ] || die "no -X <pkg>.Version= ldflag found in .goreleaser.yaml"
+go build -ldflags "-X $version_sym=0.0.0-check" -o "$tmp/pocketbase" .
+"$tmp/pocketbase" --version | grep -q '0\.0\.0-check' || \
+    die "the .goreleaser.yaml version ldflag ($version_sym) does not set the binary version"
+
+# `pocketbase update` must pull velabase releases, never upstream's
+grep -q 'plugins/update"' main.go && \
+    die "main.go registers upstream's update plugin (it would self-update to plain PocketBase)"
+grep -A3 'ghupdate.MustRegister' main.go | tr -d '[:space:]' | grep -q 'Owner:"velastack",Repo:"velabase"' || \
+    die "main.go must register ghupdate with Owner velastack / Repo velabase"
 
 # go test on the plugin packages runs them with this module's build list,
 # i.e. against the PocketBase version pinned here (not the one in their go.mod)
-echo "==> plugin tests against $(go list -m -f '{{.Path}} {{.Version}}' github.com/pocketbase/pocketbase)"
+echo "==> plugin tests against $(go list -m -f '{{.Path}} {{.Version}}' ganigeorgiev.com/pocketbase/pocketbase)"
 go test "${PLUGINS[@]/%//...}"
 
 echo "==> smoke test"

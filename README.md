@@ -5,7 +5,7 @@
 - [pocketbase-openworkflow](https://github.com/velastack/pocketbase-openworkflow): an OpenWorkflow-compatible durable workflow engine with a **Workflows** superuser UI.
 - [pocketbase-whatsapp](https://github.com/velastack/pocketbase-whatsapp): WhatsApp one-time code auth.
 
-velabase is a regular Go program that depends on PocketBase and the plugins. It does not patch PocketBase. `main.go` is upstream's [`examples/base/main.go`](https://github.com/pocketbase/pocketbase/blob/master/examples/base/main.go) plus the plugin register calls, and `pocketbase update` points at this repo's releases.
+velabase is a regular Go program that depends on PocketBase and the plugins. It does not patch PocketBase. `main.go` is upstream's [`examples/base/main.go`](https://ganigeorgiev.com/pocketbase/pocketbase/files/examples/base/main.go) plus the plugin register calls, and `pocketbase update` points at this repo's releases.
 
 ## Versions
 
