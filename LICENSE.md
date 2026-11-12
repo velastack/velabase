@@ -22,7 +22,7 @@ SOFTWARE.
 
 ---
 
-velabase builds embed PocketBase (https://github.com/pocketbase/pocketbase):
+velabase builds embed PocketBase (https://ganigeorgiev.com/pocketbase/pocketbase):
 
 The MIT License (MIT)
 Copyright (c) 2022 - present, Gani Georgiev

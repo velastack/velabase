@@ -6,14 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
-	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/plugins/ghupdate"
-	"github.com/pocketbase/pocketbase/plugins/jsvm"
-	"github.com/pocketbase/pocketbase/plugins/migratecmd"
-	"github.com/pocketbase/pocketbase/tools/hook"
-	"github.com/pocketbase/pocketbase/tools/osutils"
+	"ganigeorgiev.com/pocketbase/pocketbase"
+	"ganigeorgiev.com/pocketbase/pocketbase/apis"
+	"ganigeorgiev.com/pocketbase/pocketbase/core"
+	"ganigeorgiev.com/pocketbase/pocketbase/plugins/ghupdate"
+	"ganigeorgiev.com/pocketbase/pocketbase/plugins/jsvm"
+	"ganigeorgiev.com/pocketbase/pocketbase/plugins/migratecmd"
+	"ganigeorgiev.com/pocketbase/pocketbase/tools/hook"
+	"ganigeorgiev.com/pocketbase/pocketbase/tools/osutils"
 	"github.com/velastack/pocketbase-openworkflow"
 	"github.com/velastack/pocketbase-whatsapp"
 )
@@ -106,7 +106,9 @@ func main() {
 	// Point at velastack/velabase so `pocketbase update` pulls velabase
 	// builds instead of upstream pocketbase/pocketbase.
 	// Upstream switched to plugins/update (BugStage host at ganigeorgiev.com)
-	// in v0.40.6; velabase keeps ghupdate because its releases are on GitHub.
+	// in v0.40.6 and keeps ghupdate for backward-compatibility; velabase
+	// stays on ghupdate because its releases are on GitHub.
+	// scripts/check.sh fails the build if this ever points elsewhere.
 	ghupdate.MustRegister(app, app.RootCmd, ghupdate.Config{
 		Owner: "velastack",
 		Repo:  "velabase",

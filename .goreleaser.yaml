@@ -16,7 +16,7 @@ builds:
     main: .
     binary: pocketbase
     ldflags:
-      - -s -w -X github.com/pocketbase/pocketbase.Version={{ .Version }}
+      - -s -w -X ganigeorgiev.com/pocketbase/pocketbase.Version={{ .Version }}
     env:
       - CGO_ENABLED=0
     goos:
@@ -51,7 +51,7 @@ release:
   draft: false
   prerelease: auto
   header: |
-    PocketBase [{{ .Env.PB_VERSION }}](https://github.com/pocketbase/pocketbase/releases/tag/{{ .Env.PB_VERSION }}) with:
+    PocketBase [{{ .Env.PB_VERSION }}](https://ganigeorgiev.com/pocketbase/pocketbase/releases/{{ .Env.PB_VERSION }}) with:
 
     - [pocketbase-openworkflow](https://github.com/velastack/pocketbase-openworkflow) {{ .Env.OW_VERSION }}
     - [pocketbase-whatsapp](https://github.com/velastack/pocketbase-whatsapp) {{ .Env.WA_VERSION }}

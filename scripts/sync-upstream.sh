@@ -5,7 +5,7 @@
 # velabase versions match PocketBase: velabase vX.Y.Z == PocketBase vX.Y.Z
 # + the velastack plugins. When a new upstream release is out this:
 #
-#   1. bumps github.com/pocketbase/pocketbase to it, and the plugins to their
+#   1. bumps ganigeorgiev.com/pocketbase/pocketbase to it, and the plugins to their
 #      latest release;
 #   2. 3-way merges upstream's examples/base/main.go changes (old -> new
 #      version) into our main.go;
@@ -27,7 +27,7 @@ set -euo pipefail
 
 export GOWORK=off
 
-PB="github.com/pocketbase/pocketbase"
+PB="ganigeorgiev.com/pocketbase/pocketbase"
 PLUGINS=(
     github.com/velastack/pocketbase-openworkflow
     github.com/velastack/pocketbase-whatsapp
