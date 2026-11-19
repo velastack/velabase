@@ -16,9 +16,14 @@
 # run failed before the release), so re-running is always safe. Nothing to do
 # when the pinned version is the latest upstream release and is already tagged.
 #
+# A plugin change normally ships with the next upstream release. To ship it
+# sooner, name the pinned version: if the build changed since its last
+# release, that tags vX.Y.(Z+1)-beta.N, a prerelease.
+#
 # Usage:
 #   bash scripts/sync-upstream.sh
 #   UPSTREAM_VERSION=vX.Y.Z bash scripts/sync-upstream.sh   # pin the target
+#   UPSTREAM_VERSION=<pinned> bash scripts/sync-upstream.sh # beta of what is on master
 #
 # In GitHub Actions the new tag is written to $GITHUB_OUTPUT as `tag=vX.Y.Z`
 # (empty when there is nothing to release).
@@ -85,8 +90,34 @@ if [ "$current" != "$latest" ]; then
         -m "$(go list -m -f '{{.Path}} {{.Version}}' "${PLUGINS[@]}")"
     echo "==> committed $(git rev-parse --short HEAD) pocketbase $latest"
 elif git rev-parse -q --verify "refs/tags/$latest" > /dev/null; then
-    echo "==> $latest is already released, nothing to do"
-    output "tag="
+    # Released already. A plugin change merged since then normally waits for
+    # the next upstream release; asking for the pinned version by name
+    # (UPSTREAM_VERSION) ships it now, as a beta of the next patch version:
+    # vX.Y.(Z+1)-beta.N. The scheduled run never names a version, so it never
+    # takes this path.
+    if [ -z "${UPSTREAM_VERSION:-}" ]; then
+        echo "==> $latest is already released, nothing to do"
+        output "tag="
+        exit 0
+    fi
+
+    core="${latest#v}"
+    next="v${core%.*}.$(( ${core##*.} + 1 ))"
+    last_beta="$(git tag --list "$next-beta.*" | sort -V | tail -n1)"
+    released="${last_beta:-$latest}"
+
+    if git diff --quiet "$released" HEAD -- '*.go' go.mod go.sum; then
+        echo "==> the build is unchanged since $released, nothing to do"
+        output "tag="
+        exit 0
+    fi
+
+    bash scripts/check.sh
+
+    release="$next-beta.$(( ${last_beta##*.} + 1 ))"
+    git tag "$release"
+    echo "==> tagged $release: $latest with the changes since $released (push the tag to release)"
+    output "tag=$release"
     exit 0
 else
     bash scripts/check.sh

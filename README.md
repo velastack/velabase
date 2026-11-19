@@ -21,7 +21,7 @@ The [sync upstream](.github/workflows/sync.yaml) workflow checks for a new Pocke
 
 If any step fails, nothing is pushed and the workflow run fails. Fix the cause, for example by releasing a plugin fix or resolving a `main.go` merge conflict, then re-run it from the Actions tab. You can also pick the target version there.
 
-Plugin releases ship with the next PocketBase release.
+Plugin releases ship with the next PocketBase release. To ship one sooner, run the sync upstream workflow from the Actions tab with the version velabase is already on: if the build has changed since its last release, it publishes a prerelease of the next patch version, `vX.Y.(Z+1)-beta.N`.
 
 ## Settings from the environment
 
