@@ -12,6 +12,7 @@ set -euo pipefail
 export GOWORK=off
 
 PLUGINS=(
+    github.com/velastack/pocketbase-oauth
     github.com/velastack/pocketbase-openworkflow
     github.com/velastack/pocketbase-whatsapp
 )
@@ -79,5 +80,11 @@ code="$(curl -s -o /dev/null -w '%{http_code}' "$base/api/ow/v1/default/runs")"
 
 curl -sf "$base/api/collections/users/auth-methods" | grep -q '"whatsapp"' || \
     die "whatsapp missing from the users auth-methods"
+
+curl -sf "$base/.well-known/oauth-authorization-server" | grep -q '"token_endpoint"' || \
+    die "oauth authorization server metadata missing"
+
+code="$(curl -s -o /dev/null -w '%{http_code}' -X POST -d '{}' "$base/api/oauth/introspect")"
+[ "$code" = "401" ] || die "expected 401 from the unauthenticated OAuth introspection API, got $code"
 
 echo "==> ok"

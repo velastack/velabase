@@ -4,6 +4,7 @@
 
 - [pocketbase-openworkflow](https://github.com/velastack/pocketbase-openworkflow): an OpenWorkflow-compatible durable workflow engine with a **Workflows** superuser UI.
 - [pocketbase-whatsapp](https://github.com/velastack/pocketbase-whatsapp): WhatsApp one-time code auth.
+- [pocketbase-oauth](https://github.com/velastack/pocketbase-oauth): an OAuth 2.1 authorization server for the auth collections, which is what lets MCP clients such as ChatGPT and Claude sign in to an app built on velabase.
 
 velabase is a regular Go program that depends on PocketBase and the plugins. It does not patch PocketBase. `main.go` is upstream's [`examples/base/main.go`](https://ganigeorgiev.com/pocketbase/pocketbase/files/examples/base/main.go) plus the plugin register calls, and `pocketbase update` points at this repo's releases.
 

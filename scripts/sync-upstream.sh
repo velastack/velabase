@@ -29,6 +29,7 @@ export GOWORK=off
 
 PB="ganigeorgiev.com/pocketbase/pocketbase"
 PLUGINS=(
+    github.com/velastack/pocketbase-oauth
     github.com/velastack/pocketbase-openworkflow
     github.com/velastack/pocketbase-whatsapp
 )
