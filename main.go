@@ -14,6 +14,7 @@ import (
 	"ganigeorgiev.com/pocketbase/pocketbase/plugins/migratecmd"
 	"ganigeorgiev.com/pocketbase/pocketbase/tools/hook"
 	"ganigeorgiev.com/pocketbase/pocketbase/tools/osutils"
+	"github.com/velastack/pocketbase-oauth"
 	"github.com/velastack/pocketbase-openworkflow"
 	"github.com/velastack/pocketbase-whatsapp"
 )
@@ -120,6 +121,11 @@ func main() {
 
 	// WhatsApp one-time code auth (configured in Settings > WhatsApp)
 	whatsapp.MustRegister(app, whatsapp.Config{})
+
+	// OAuth 2.1 authorization server for the auth collections (what MCP
+	// clients such as ChatGPT and Claude sign in with); the sign-in and
+	// consent page is the app's, at {Application URL}/oauth/authorize
+	oauth.MustRegister(app, oauth.Config{})
 
 	// core settings pinned by env variables (APP_NAME, ORIGIN, PB_SMTP_*, PB_S3_*, ...)
 	bindEnvSettings(app)
